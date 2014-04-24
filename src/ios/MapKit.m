@@ -15,6 +15,7 @@
 @synthesize imageButton;
 
 
+
 -(CDVPlugin*) initWithWebView:(UIWebView*)theWebView
 {
     self = (MapKitView*)[super initWithWebView:theWebView];
@@ -32,6 +33,8 @@
 
 - (void)createViewWithOptions:(NSDictionary *)options {
 
+
+
     //This is the Designated Initializer
 
     // defaults
@@ -43,6 +46,8 @@
 
     if(atBottom) {
         y += self.webView.bounds.size.height - height;
+    } else {
+        y = 68;
     }
 
     self.childView = [[UIView alloc] initWithFrame:CGRectMake(x,y,width,height)];
@@ -51,46 +56,52 @@
     self.mapView.multipleTouchEnabled   = YES;
     self.mapView.autoresizesSubviews    = YES;
     self.mapView.userInteractionEnabled = YES;
-	self.mapView.showsUserLocation = YES;
-	self.mapView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-	self.childView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.mapView.showsUserLocation = YES;
+    self.mapView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.childView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
 
     CLLocationCoordinate2D centerCoord = { [[options objectForKey:@"lat"] floatValue] , [[options objectForKey:@"lon"] floatValue] };
-	CLLocationDistance diameter = [[options objectForKey:@"diameter"] floatValue];
+    CLLocationDistance diameter = [[options objectForKey:@"diameter"] floatValue];
 
-	MKCoordinateRegion region=[ self.mapView regionThatFits: MKCoordinateRegionMakeWithDistance(centerCoord,
+    MKCoordinateRegion region=[ self.mapView regionThatFits: MKCoordinateRegionMakeWithDistance(centerCoord,
                                                                                                 diameter*(height / self.webView.bounds.size.width),
                                                                                                 diameter*(height / self.webView.bounds.size.width))];
     [self.mapView setRegion:region animated:YES];
-	[self.childView addSubview:self.mapView];
+    [self.childView addSubview:self.mapView];
 
-	[ [ [ self viewController ] view ] addSubview:self.childView];
+    [ [ [ self viewController ] view ] addSubview:self.childView];
 
 }
 
 - (void)destroyMap:(CDVInvokedUrlCommand *)command
 {
-	if (self.mapView)
-	{
-		[ self.mapView removeAnnotations:mapView.annotations];
-		[ self.mapView removeFromSuperview];
+    if (self.mapView)
+    {
+        [ self.mapView removeAnnotations:mapView.annotations];
+        [ self.mapView removeFromSuperview];
 
-		mapView = nil;
-	}
-	if(self.imageButton)
-	{
-		[ self.imageButton removeFromSuperview];
-		//[ self.imageButton removeTarget:self action:@selector(closeButton:) forControlEvents:UIControlEventTouchUpInside];
-		self.imageButton = nil;
+        mapView = nil;
+    }
+    if(self.imageButton)
+    {
+        [ self.imageButton removeFromSuperview];
+        //[ self.imageButton removeTarget:self action:@selector(closeButton:) forControlEvents:UIControlEventTouchUpInside];
+        self.imageButton = nil;
 
-	}
-	if(self.childView)
-	{
-		[ self.childView removeFromSuperview];
-		self.childView = nil;
-	}
+    }
+    if(self.childView)
+    {
+        [ self.childView removeFromSuperview];
+        self.childView = nil;
+    }
     self.buttonCallback = nil;
+}
+
+- (void)mapViewDidFinishRenderingMap:(MKMapView *)mapView fullyRendered:(BOOL)fullyRendered
+{
+
+
 }
 
 - (void)clearMapPins:(CDVInvokedUrlCommand *)command
@@ -103,15 +114,16 @@
 {
 
     NSArray *pins = command.arguments[0];
+    NSMutableArray *newPins = [[NSMutableArray alloc] init];
 
-  for (int y = 0; y < pins.count; y++)
+    for (int y = 0; y < pins.count; y++)
     {
         NSDictionary *pinData = [pins objectAtIndex:y];
-		CLLocationCoordinate2D pinCoord = { [[pinData objectForKey:@"lat"] floatValue] , [[pinData objectForKey:@"lon"] floatValue] };
-		NSString *title=[[pinData valueForKey:@"title"] description];
-		NSString *subTitle=[[pinData valueForKey:@"snippet"] description];
-		NSInteger index=[[pinData valueForKey:@"index"] integerValue];
-		BOOL selected = [[pinData valueForKey:@"selected"] boolValue];
+        CLLocationCoordinate2D pinCoord = { [[pinData objectForKey:@"lat"] floatValue] , [[pinData objectForKey:@"lon"] floatValue] };
+        NSString *title=[[pinData valueForKey:@"title"] description];
+        NSString *subTitle=[[pinData valueForKey:@"snippet"] description];
+        NSInteger index=[[pinData valueForKey:@"index"] integerValue];
+        BOOL selected = [[pinData valueForKey:@"selected"] boolValue];
 
         NSString *pinColor = nil;
         NSString *imageURL = nil;
@@ -127,46 +139,53 @@
             imageURL=[[iconOptions valueForKey:@"resource"] description];
         }
 
-		CDVAnnotation *annotation = [[CDVAnnotation alloc] initWithCoordinate:pinCoord index:index title:title subTitle:subTitle imageURL:imageURL];
-		annotation.pinColor=pinColor;
-		annotation.selected = selected;
+        CDVAnnotation *annotation = [[CDVAnnotation alloc] initWithCoordinate:pinCoord index:index title:title subTitle:subTitle imageURL:imageURL];
+        annotation.pinColor=pinColor;
+        annotation.selected = selected;
 
-		[self.mapView addAnnotation:annotation];
-        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
-	}
+        [newPins addObject:annotation];
+//
+//        [self.mapView addAnnotation:annotation];
+//        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+    }
+
+    NSLog(@"new pins %@ %d", newPins, pins.count);
+//    self.mapClusterController = [[CCHMapClusterController alloc] initWithMapView:self.mapView];
+//    [self.mapClusterController addAnnotations:newPins withCompletionHandler:NULL];
+//    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 
 }
 
 -(void)showMap:(CDVInvokedUrlCommand *)command
 {
     if (!self.mapView)
-	{
+    {
         [self createViewWithOptions:command.arguments[0]];
-	}
-	self.childView.hidden = NO;
-	self.mapView.showsUserLocation = YES;
+    }
+    self.childView.hidden = NO;
+    self.mapView.showsUserLocation = YES;
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 }
 
 
 - (void)hideMap:(CDVInvokedUrlCommand *)command
 {
-    if (!self.mapView || self.childView.hidden==YES) 
-	{
-		return;
-	}
-	// disable location services, if we no longer need it.
-	self.mapView.showsUserLocation = NO;
-	self.childView.hidden = YES;
+    if (!self.mapView || self.childView.hidden==YES)
+    {
+        return;
+    }
+    // disable location services, if we no longer need it.
+    self.mapView.showsUserLocation = NO;
+    self.childView.hidden = YES;
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 }
 
 - (void)changeMapType:(CDVInvokedUrlCommand *)command
 {
     if (!self.mapView || self.childView.hidden==YES)
-	{
-		return;
-	}
+    {
+        return;
+    }
 
     int mapType = ([command.arguments[0] objectForKey:@"mapType"]) ? [[command.arguments[0] objectForKey:@"mapType"] intValue] : 0;
 
@@ -185,126 +204,205 @@
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 }
 
+- (void)moveCenter:(CDVInvokedUrlCommand *)command
+{
+    if (!self.mapView || self.childView.hidden==YES)
+    {
+        return;
+    }
+
+    float spanX = 0.00725;
+    float spanY = 0.00725;
+
+    MKCoordinateRegion region;
+    region.center.latitude = [command.arguments[0][@"lat"] doubleValue] ;
+    region.center.longitude = [command.arguments[0][@"lon"] doubleValue] ;
+    region.span = MKCoordinateSpanMake(spanX, spanY);
+
+
+    [self.mapView setRegion:region animated:YES];
+
+    NSLog(@"iOS Coordinates lon %@", command.arguments[0][@"lon"] );
+    NSLog(@"iOS Coordinates lat %@", command.arguments[0][@"lat"] );
+
+    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+}
+
+- (void)updatePins:(CDVInvokedUrlCommand *)command
+{
+    if (!self.mapView || self.childView.hidden==YES)
+    {
+        return;
+    }
+
+//    NSLog(@"updatePINS %@", command.arguments);
+
+    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+}
+
 //Might need this later?
 /*- (void) mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation
-{
-    MKCoordinateRegion mapRegion;
-    mapRegion.center = userLocation.coordinate;
-    mapRegion.span.latitudeDelta = 0.2;
-    mapRegion.span.longitudeDelta = 0.2;
+ {
+ MKCoordinateRegion mapRegion;
+ mapRegion.center = userLocation.coordinate;
+ mapRegion.span.latitudeDelta = 0.2;
+ mapRegion.span.longitudeDelta = 0.2;
 
-    [self.mapView setRegion:mapRegion animated: YES];
-}
+ [self.mapView setRegion:mapRegion animated: YES];
+ }
 
 
-- (void)mapView:(MKMapView *)theMapView regionDidChangeAnimated: (BOOL)animated
-{
-    NSLog(@"region did change animated");
-    float currentLat = theMapView.region.center.latitude;
-    float currentLon = theMapView.region.center.longitude;
-    float latitudeDelta = theMapView.region.span.latitudeDelta;
-    float longitudeDelta = theMapView.region.span.longitudeDelta;
+ - (void)mapView:(MKMapView *)theMapView regionDidChangeAnimated: (BOOL)animated
+ {
+ NSLog(@"region did change animated");
+ float currentLat = theMapView.region.center.latitude;
+ float currentLon = theMapView.region.center.longitude;
+ float latitudeDelta = theMapView.region.span.latitudeDelta;
+ float longitudeDelta = theMapView.region.span.longitudeDelta;
 
-    NSString* jsString = nil;
-    jsString = [[NSString alloc] initWithFormat:@"geo.onMapMove(\'%f','%f','%f','%f\');", currentLat,currentLon,latitudeDelta,longitudeDelta];
-    [self.webView stringByEvaluatingJavaScriptFromString:jsString];
-    [jsString autorelease];
-}
+ NSString* jsString = nil;
+ jsString = [[NSString alloc] initWithFormat:@"geo.onMapMove(\'%f','%f','%f','%f\');", currentLat,currentLon,latitudeDelta,longitudeDelta];
+ [self.webView stringByEvaluatingJavaScriptFromString:jsString];
+ [jsString autorelease];
+ }
  */
 
 
 - (MKAnnotationView *) mapView:(MKMapView *)theMapView viewForAnnotation:(id <MKAnnotation>) annotation {
-  
-  if ([annotation class] != CDVAnnotation.class) {
-    return nil;
-  }
 
-	CDVAnnotation *phAnnotation=(CDVAnnotation *) annotation;
-	NSString *identifier=[NSString stringWithFormat:@"INDEX[%i]", phAnnotation.index];
+    if ([annotation class] != CDVAnnotation.class) {
+        return nil;
+    }
 
-	MKPinAnnotationView *annView = (MKPinAnnotationView *)[theMapView dequeueReusableAnnotationViewWithIdentifier:identifier];
+    CDVAnnotation *phAnnotation=(CDVAnnotation *) annotation;
+    NSString *identifier=[NSString stringWithFormat:@"INDEX[%i]", phAnnotation.index];
 
-	if (annView!=nil) return annView;
+    MKPinAnnotationView *annView = (MKPinAnnotationView *)[theMapView dequeueReusableAnnotationViewWithIdentifier:identifier];
 
-	annView=[[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:identifier];
+    if (annView!=nil) return annView;
 
-	annView.animatesDrop=YES;
-	annView.canShowCallout = YES;
-	if ([phAnnotation.pinColor isEqualToString:@"120"])
-		annView.pinColor = MKPinAnnotationColorGreen;
-	else if ([phAnnotation.pinColor isEqualToString:@"270"])
-		annView.pinColor = MKPinAnnotationColorPurple;
-	else
-		annView.pinColor = MKPinAnnotationColorRed;
+    annView=[[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:identifier];
 
-	AsyncImageView* asyncImage = [[AsyncImageView alloc] initWithFrame:CGRectMake(0,0, 50, 32)];
-	asyncImage.tag = 999;
-	if (phAnnotation.imageURL)
-	{
-		NSURL *url = [[NSURL alloc] initWithString:phAnnotation.imageURL];
-		[asyncImage loadImageFromURL:url];
-	} 
-	else 
-	{
-		[asyncImage loadDefaultImage];
-	}
+    annView.animatesDrop=YES;
+    annView.canShowCallout = YES;
+    if ([phAnnotation.pinColor isEqualToString:@"120"])
+        annView.pinColor = MKPinAnnotationColorGreen;
+    else if ([phAnnotation.pinColor isEqualToString:@"270"])
+        annView.pinColor = MKPinAnnotationColorPurple;
+    else
+        annView.pinColor = MKPinAnnotationColorRed;
 
-	annView.leftCalloutAccessoryView = asyncImage;
+    AsyncImageView* asyncImage = [[AsyncImageView alloc] initWithFrame:CGRectMake(0,0, 50, 32)];
+    asyncImage.tag = 999;
+    if (phAnnotation.imageURL)
+    {
+        NSURL *url = [[NSURL alloc] initWithString:phAnnotation.imageURL];
+        [asyncImage loadImageFromURL:url];
+    }
+    else
+    {
+        [asyncImage loadDefaultImage];
+    }
+
+    annView.leftCalloutAccessoryView = asyncImage;
 
 
-	if (self.buttonCallback && phAnnotation.index!=-1)
-	{
+    if (self.buttonCallback && phAnnotation.index!=-1)
+    {
 
-		UIButton *myDetailButton = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
-		myDetailButton.frame = CGRectMake(0, 0, 23, 23);
-		myDetailButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-		myDetailButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-		myDetailButton.tag=phAnnotation.index;
-		annView.rightCalloutAccessoryView = myDetailButton;
-		[ myDetailButton addTarget:self action:@selector(checkButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        UIButton *myDetailButton = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
+        myDetailButton.frame = CGRectMake(0, 0, 23, 23);
+        myDetailButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+        myDetailButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+        myDetailButton.tag=phAnnotation.index;
+        annView.rightCalloutAccessoryView = myDetailButton;
+        [ myDetailButton addTarget:self action:@selector(checkButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 
-	}
+    }
 
-	if(phAnnotation.selected)
-	{
-		[self performSelector:@selector(openAnnotation:) withObject:phAnnotation afterDelay:1.0];
-	}
+    if(phAnnotation.selected)
+    {
+        [self performSelector:@selector(openAnnotation:) withObject:phAnnotation afterDelay:1.0];
+    }
 
-	return annView;
+    return annView;
 }
 
 -(void)openAnnotation:(id <MKAnnotation>) annotation
 {
-	[ self.mapView selectAnnotation:annotation animated:YES];  
-	
+    [ self.mapView selectAnnotation:annotation animated:YES];
+
 }
 
-- (void) checkButtonTapped:(id)button 
+- (void) checkButtonTapped:(id)button
 {
-	UIButton *tmpButton = button;
-	NSString* jsString = [NSString stringWithFormat:@"%@(\"%i\");", self.buttonCallback, tmpButton.tag];
-	[self.webView stringByEvaluatingJavaScriptFromString:jsString];
+    UIButton *tmpButton = button;
+    NSString* jsString = [NSString stringWithFormat:@"%@(\"%i\");", self.buttonCallback, tmpButton.tag];
+    [self.webView stringByEvaluatingJavaScriptFromString:jsString];
 }
 
 - (void)dealloc
 {
     if (self.mapView)
-	{
-		[ self.mapView removeAnnotations:mapView.annotations];
-		[ self.mapView removeFromSuperview];
+    {
+        [ self.mapView removeAnnotations:mapView.annotations];
+        [ self.mapView removeFromSuperview];
         self.mapView = nil;
-	}
-	if(self.imageButton)
-	{
-		[ self.imageButton removeFromSuperview];
+    }
+    if(self.imageButton)
+    {
+        [ self.imageButton removeFromSuperview];
         self.imageButton = nil;
-	}
-	if(childView)
-	{
-		[ self.childView removeFromSuperview];
+    }
+    if(childView)
+    {
+        [ self.childView removeFromSuperview];
         self.childView = nil;
-	}
+    }
     self.buttonCallback = nil;
+}
+
+//when a pin is selected, do something
+- (void)mapView:(MKMapView *)mapView didSelectAnnotationView:(MKAnnotationView *)view {
+    NSLog(@"DEBUG: got here selectasdasdas stuff");
+
+    NSString *annotationTapFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.didSelectAnnotationView('", [view.annotation title], "')"];
+    [self.webView stringByEvaluatingJavaScriptFromString:annotationTapFunctionString];
+}
+
+double deg2rad(double deg) {
+    return deg * (M_PI/180);
+}
+
+//when the map is moved
+- (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
+
+    MKCoordinateRegion region = self.mapView.region;
+
+    const int EARTH_RADIUS = 6371;
+    const double KM_TO_MILES = 1.609344;
+
+    double lat = region.center.latitude;
+    double lon = region.center.longitude;
+
+    double minLat = deg2rad(lat - (region.span.latitudeDelta / 2.0));
+    double maxLat = deg2rad(lat + (region.span.latitudeDelta / 2.0));
+
+    double minLon = deg2rad(lon - (region.span.longitudeDelta / 2.0));
+    double maxLon = deg2rad(lon + (region.span.longitudeDelta / 2.0));
+
+
+    // Haversine formula
+    double h = ( pow(sin((maxLat-minLat)/2), 2) + cos(minLat)*cos(maxLat) * pow(sin((maxLon-minLon)/2), 2) );
+
+    h = h > 1.0 ? 1.0 : h; // Avoid rounding errors
+    h = h < 0.0 ? 0.0 : h; // Avoid asin errors
+
+    double radius = (asin(sqrt(h)) * 2 * EARTH_RADIUS) / KM_TO_MILES;
+
+    // lf : long float -> double
+    NSString *regionDidChangeAnimatedFunctionString = [NSString stringWithFormat:@"%s%lf%s%lf%s%lf%s", "mapKit.regionDidChangeAnimated('", radius,",", lat,",", lon, "')"];
+    [self.webView stringByEvaluatingJavaScriptFromString:regionDidChangeAnimatedFunctionString];
 }
 
 @end
