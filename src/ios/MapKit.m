@@ -144,15 +144,15 @@
         annotation.selected = selected;
 
         [newPins addObject:annotation];
-//
-//        [self.mapView addAnnotation:annotation];
-//        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+
+       // [self.mapView addAnnotation:annotation];
+       // [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
     }
 
     NSLog(@"new pins %@ %lu", newPins, (unsigned long) pins.count);
-//    self.mapClusterController = [[CCHMapClusterController alloc] initWithMapView:self.mapView];
-//    [self.mapClusterController addAnnotations:newPins withCompletionHandler:NULL];
-//    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+   self.mapClusterController = [[CCHMapClusterController alloc] initWithMapView:self.mapView];
+   [self.mapClusterController addAnnotations:newPins withCompletionHandler:NULL];
+   [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 
 }
 
