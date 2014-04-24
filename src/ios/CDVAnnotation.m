@@ -13,19 +13,19 @@
 @synthesize title = _title;
 @synthesize subTitle = _subTitle;
 @synthesize index = _index;
-@synthesize	placemark = _placemark;
-@synthesize	imageURL = _imageURL;
-@synthesize	coordinate = _coordinate;
-@synthesize	pinColor;
+@synthesize placemark = _placemark;
+@synthesize imageURL = _imageURL;
+@synthesize coordinate = _coordinate;
+@synthesize pinColor;
 @synthesize selected;
 
 - (id)initWithCoordinate:(CLLocationCoordinate2D)coordinate index:(NSInteger)index title:(NSString*)title subTitle:(NSString*)subTitle imageURL:(NSString*)imageURL {
     if ((self = [super init])) {
         _coordinate=coordinate;
         _title = title;
-		_subTitle = subTitle;
-		_index=index;
-		_imageURL=imageURL;
+        _subTitle = subTitle;
+        _index=index;
+        _imageURL=imageURL;
     }
     return self;
 }
@@ -35,7 +35,7 @@
 }
 
 - (NSString *)subtitle {
-	return _subTitle;
+    return _subTitle;
 }
 
 - (void)notifyCalloutInfo:(MKPlacemark *)newPlacemark {

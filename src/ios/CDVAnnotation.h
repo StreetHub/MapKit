@@ -14,12 +14,12 @@
 @private
     CLLocationCoordinate2D _coordinate;
     NSString *_title;
-	NSString *_subTitle;
-	NSString *_imageURL;
-	NSInteger _index;
-	MKPlacemark *_placemark;
-	NSString *pinColor;
-	BOOL selected;
+    NSString *_subTitle;
+    NSString *_imageURL;
+    NSInteger _index;
+    MKPlacemark *_placemark;
+    NSString *pinColor;
+    BOOL selected;
 }
 
 @property (nonatomic, copy) NSString *title;

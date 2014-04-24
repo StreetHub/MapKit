@@ -71,39 +71,40 @@ In case everything miserably fails and you can't build your project, you might n
         <framework src="MapKit.framework" />
         <resource-file src="src/ios/icon.png" />
 
-        <header-file src="src/ios/AsyncImageView.h" />
+        
         <header-file src="src/ios/CDVAnnotation.h" />
         <header-file src="src/ios/MapKit.h" />
+        <header-file src="src/ios/AsyncImageView.h" />
+        <header-file src="src/ios/cluster/CCHCenterOfMassMapClusterer.h" />
+        <header-file src="src/ios/cluster/CCHFadeInOutMapAnimator.h" />
+        <header-file src="src/ios/cluster/CCHMapAnimator.h" />
+        <header-file src="src/ios/cluster/CCHMapClusterAnnotation.h" />
+        <header-file src="src/ios/cluster/CCHMapClusterController.h" />
+        <header-file src="src/ios/cluster/CCHMapClusterControllerDebugPolygon.h" />
+        <header-file src="src/ios/cluster/CCHMapClusterControllerDelegate.h" />
+        <header-file src="src/ios/cluster/CCHMapClusterControllerUtils.h" />
+        <header-file src="src/ios/cluster/CCHMapClusterOperation.h" />
+        <header-file src="src/ios/cluster/CCHMapClusterer.h" />
+        <header-file src="src/ios/cluster/CCHMapTree.h" />
+        <header-file src="src/ios/cluster/CCHMapTreeUtils.h" />
+        <header-file src="src/ios/cluster/CCHMapViewDelegateProxy.h" />
+        <header-file src="src/ios/cluster/CCHNearCenterMapClusterer.h" />
+        <header-file src="src/ios/cluster/ClusterAnnotationView.h" />
 
         <source-file src="src/ios/AsyncImageView.m" />
         <source-file src="src/ios/CDVAnnotation.m" />
         <source-file src="src/ios/MapKit.m" />
-        <source-file src="src/ios/cluster/CCHCenterOfMassMapClusterer.h" />
         <source-file src="src/ios/cluster/CCHCenterOfMassMapClusterer.m" />
-        <source-file src="src/ios/cluster/CCHFadeInOutMapAnimator.h" />
         <source-file src="src/ios/cluster/CCHFadeInOutMapAnimator.m" />
-        <source-file src="src/ios/cluster/CCHMapAnimator.h" />
-        <source-file src="src/ios/cluster/CCHMapClusterAnnotation.h" />
         <source-file src="src/ios/cluster/CCHMapClusterAnnotation.m" />
-        <source-file src="src/ios/cluster/CCHMapClusterController.h" />
         <source-file src="src/ios/cluster/CCHMapClusterController.m" />
-        <source-file src="src/ios/cluster/CCHMapClusterControllerDebugPolygon.h" />
         <source-file src="src/ios/cluster/CCHMapClusterControllerDebugPolygon.m" />
-        <source-file src="src/ios/cluster/CCHMapClusterControllerDelegate.h" />
-        <source-file src="src/ios/cluster/CCHMapClusterControllerUtils.h" />
         <source-file src="src/ios/cluster/CCHMapClusterControllerUtils.m" />
-        <source-file src="src/ios/cluster/CCHMapClusterOperation.h" />
         <source-file src="src/ios/cluster/CCHMapClusterOperation.m" />
-        <source-file src="src/ios/cluster/CCHMapClusterer.h" />
-        <source-file src="src/ios/cluster/CCHMapTree.h" />
         <source-file src="src/ios/cluster/CCHMapTree.m" />
-        <source-file src="src/ios/cluster/CCHMapTreeUtils.h" />
         <source-file src="src/ios/cluster/CCHMapTreeUtils.m" />
-        <source-file src="src/ios/cluster/CCHMapViewDelegateProxy.h" />
         <source-file src="src/ios/cluster/CCHMapViewDelegateProxy.m" />
-        <source-file src="src/ios/cluster/CCHNearCenterMapClusterer.h" />
         <source-file src="src/ios/cluster/CCHNearCenterMapClusterer.m" />
-        <source-file src="src/ios/cluster/ClusterAnnotationView.h" />
         <source-file src="src/ios/cluster/ClusterAnnotationView.m" />
     </platform>
 </plugin>

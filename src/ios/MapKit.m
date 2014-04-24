@@ -149,7 +149,7 @@
 //        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
     }
 
-    NSLog(@"new pins %@ %d", newPins, pins.count);
+    NSLog(@"new pins %@ %lu", newPins, (unsigned long) pins.count);
 //    self.mapClusterController = [[CCHMapClusterController alloc] initWithMapView:self.mapView];
 //    [self.mapClusterController addAnnotations:newPins withCompletionHandler:NULL];
 //    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
@@ -275,7 +275,7 @@
     }
 
     CDVAnnotation *phAnnotation=(CDVAnnotation *) annotation;
-    NSString *identifier=[NSString stringWithFormat:@"INDEX[%i]", phAnnotation.index];
+    NSString *identifier=[NSString stringWithFormat:@"INDEX[%li]", (long)phAnnotation.index];
 
     MKPinAnnotationView *annView = (MKPinAnnotationView *)[theMapView dequeueReusableAnnotationViewWithIdentifier:identifier];
 
@@ -337,7 +337,7 @@
 - (void) checkButtonTapped:(id)button
 {
     UIButton *tmpButton = button;
-    NSString* jsString = [NSString stringWithFormat:@"%@(\"%i\");", self.buttonCallback, tmpButton.tag];
+    NSString* jsString = [NSString stringWithFormat:@"%@(\"%li\");", self.buttonCallback, (long)tmpButton.tag];
     [self.webView stringByEvaluatingJavaScriptFromString:jsString];
 }
 
