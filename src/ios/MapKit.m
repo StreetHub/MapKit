@@ -7,6 +7,16 @@
 #import "CDVAnnotation.h"
 #import "AsyncImageView.h"
 
+@interface MapKitView()<CCHMapClusterControllerDelegate>
+
+@property (strong, nonatomic) CCHMapClusterController *mapClusterControllerRed;
+@property (strong, nonatomic) CCHMapClusterController *mapClusterControllerBlue;
+@property (assign, nonatomic) NSUInteger count;
+@property (strong, nonatomic) id<CCHMapClusterer> mapClusterer;
+@property (strong, nonatomic) id<CCHMapAnimator> mapAnimator;
+
+@end
+
 @implementation MapKitView
 
 @synthesize buttonCallback;
@@ -144,16 +154,42 @@
         annotation.selected = selected;
 
         [newPins addObject:annotation];
-
-       // [self.mapView addAnnotation:annotation];
-       // [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
     }
 
-    NSLog(@"new pins %@ %lu", newPins, (unsigned long) pins.count);
-   self.mapClusterController = [[CCHMapClusterController alloc] initWithMapView:self.mapView];
-   [self.mapClusterController addAnnotations:newPins withCompletionHandler:NULL];
-   [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+    self.mapClusterController = [[CCHMapClusterController alloc] initWithMapView:self.mapView];
+    self.mapClusterController.debuggingEnabled = YES;
+    self.mapClusterController.cellSize = 30;
+//    self.mapClusterController.maxZoomLevelForClustering = 13;
+    [self.mapClusterController addAnnotations:newPins withCompletionHandler:NULL];
 
+    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+
+}
+
+- (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation
+{
+    MKAnnotationView *annotationView;
+
+    if ([annotation isKindOfClass:CCHMapClusterAnnotation.class]) {
+        static NSString *identifier = @"clusterAnnotation";
+
+        ClusterAnnotationView *clusterAnnotationView = (ClusterAnnotationView *)[self.mapView dequeueReusableAnnotationViewWithIdentifier:identifier];
+        if (clusterAnnotationView) {
+            clusterAnnotationView.annotation = annotation;
+        } else {
+            clusterAnnotationView = [[ClusterAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:identifier];
+            clusterAnnotationView.canShowCallout = YES;
+        }
+
+        CCHMapClusterAnnotation *clusterAnnotation = (CCHMapClusterAnnotation *)annotation;
+        clusterAnnotationView.count = clusterAnnotation.annotations.count;
+        NSLog(@"that cluster oh yeah %d",clusterAnnotation.annotations.count);
+        clusterAnnotationView.blue = (clusterAnnotation.mapClusterController == self.mapClusterControllerBlue);
+        clusterAnnotationView.uniqueLocation = clusterAnnotation.isUniqueLocation;
+        annotationView = clusterAnnotationView;
+    }
+
+    return annotationView;
 }
 
 -(void)showMap:(CDVInvokedUrlCommand *)command
@@ -268,65 +304,65 @@
  */
 
 
-- (MKAnnotationView *) mapView:(MKMapView *)theMapView viewForAnnotation:(id <MKAnnotation>) annotation {
-
-    if ([annotation class] != CDVAnnotation.class) {
-        return nil;
-    }
-
-    CDVAnnotation *phAnnotation=(CDVAnnotation *) annotation;
-    NSString *identifier=[NSString stringWithFormat:@"INDEX[%li]", (long)phAnnotation.index];
-
-    MKPinAnnotationView *annView = (MKPinAnnotationView *)[theMapView dequeueReusableAnnotationViewWithIdentifier:identifier];
-
-    if (annView!=nil) return annView;
-
-    annView=[[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:identifier];
-
-    annView.animatesDrop=YES;
-    annView.canShowCallout = YES;
-    if ([phAnnotation.pinColor isEqualToString:@"120"])
-        annView.pinColor = MKPinAnnotationColorGreen;
-    else if ([phAnnotation.pinColor isEqualToString:@"270"])
-        annView.pinColor = MKPinAnnotationColorPurple;
-    else
-        annView.pinColor = MKPinAnnotationColorRed;
-
-    AsyncImageView* asyncImage = [[AsyncImageView alloc] initWithFrame:CGRectMake(0,0, 50, 32)];
-    asyncImage.tag = 999;
-    if (phAnnotation.imageURL)
-    {
-        NSURL *url = [[NSURL alloc] initWithString:phAnnotation.imageURL];
-        [asyncImage loadImageFromURL:url];
-    }
-    else
-    {
-        [asyncImage loadDefaultImage];
-    }
-
-    annView.leftCalloutAccessoryView = asyncImage;
-
-
-    if (self.buttonCallback && phAnnotation.index!=-1)
-    {
-
-        UIButton *myDetailButton = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
-        myDetailButton.frame = CGRectMake(0, 0, 23, 23);
-        myDetailButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-        myDetailButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
-        myDetailButton.tag=phAnnotation.index;
-        annView.rightCalloutAccessoryView = myDetailButton;
-        [ myDetailButton addTarget:self action:@selector(checkButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-
-    }
-
-    if(phAnnotation.selected)
-    {
-        [self performSelector:@selector(openAnnotation:) withObject:phAnnotation afterDelay:1.0];
-    }
-
-    return annView;
-}
+//- (MKAnnotationView *) mapView:(MKMapView *)theMapView viewForAnnotation:(id <MKAnnotation>) annotation {
+//
+//    if ([annotation class] != CDVAnnotation.class) {
+//        return nil;
+//    }
+//
+//    CDVAnnotation *phAnnotation=(CDVAnnotation *) annotation;
+//    NSString *identifier=[NSString stringWithFormat:@"INDEX[%i]", phAnnotation.index];
+//
+//    MKPinAnnotationView *annView = (MKPinAnnotationView *)[theMapView dequeueReusableAnnotationViewWithIdentifier:identifier];
+//
+//    if (annView!=nil) return annView;
+//
+//    annView=[[MKPinAnnotationView alloc] initWithAnnotation:annotation reuseIdentifier:identifier];
+//
+//    annView.animatesDrop=YES;
+//    annView.canShowCallout = YES;
+//    if ([phAnnotation.pinColor isEqualToString:@"120"])
+//        annView.pinColor = MKPinAnnotationColorGreen;
+//    else if ([phAnnotation.pinColor isEqualToString:@"270"])
+//        annView.pinColor = MKPinAnnotationColorPurple;
+//    else
+//        annView.pinColor = MKPinAnnotationColorRed;
+//
+//    AsyncImageView* asyncImage = [[AsyncImageView alloc] initWithFrame:CGRectMake(0,0, 50, 32)];
+//    asyncImage.tag = 999;
+//    if (phAnnotation.imageURL)
+//    {
+//        NSURL *url = [[NSURL alloc] initWithString:phAnnotation.imageURL];
+//        [asyncImage loadImageFromURL:url];
+//    }
+//    else
+//    {
+//        [asyncImage loadDefaultImage];
+//    }
+//
+//    annView.leftCalloutAccessoryView = asyncImage;
+//
+//
+//    if (self.buttonCallback && phAnnotation.index!=-1)
+//    {
+//
+//        UIButton *myDetailButton = [UIButton buttonWithType:UIButtonTypeDetailDisclosure];
+//        myDetailButton.frame = CGRectMake(0, 0, 23, 23);
+//        myDetailButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+//        myDetailButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+//        myDetailButton.tag=phAnnotation.index;
+//        annView.rightCalloutAccessoryView = myDetailButton;
+//        [ myDetailButton addTarget:self action:@selector(checkButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+//
+//    }
+//
+//    if(phAnnotation.selected)
+//    {
+//        [self performSelector:@selector(openAnnotation:) withObject:phAnnotation afterDelay:1.0];
+//    }
+//
+//    return annView;
+//}
 
 -(void)openAnnotation:(id <MKAnnotation>) annotation
 {
@@ -337,7 +373,7 @@
 - (void) checkButtonTapped:(id)button
 {
     UIButton *tmpButton = button;
-    NSString* jsString = [NSString stringWithFormat:@"%@(\"%li\");", self.buttonCallback, (long)tmpButton.tag];
+    NSString* jsString = [NSString stringWithFormat:@"%@(\"%i\");", self.buttonCallback, tmpButton.tag];
     [self.webView stringByEvaluatingJavaScriptFromString:jsString];
 }
 
@@ -406,3 +442,4 @@ double deg2rad(double deg) {
 }
 
 @end
+

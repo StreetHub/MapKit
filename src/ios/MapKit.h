@@ -8,7 +8,13 @@
 #import <MapKit/MapKit.h>
 
 #import <Cordova/CDVPlugin.h>
+#import "CCHMapClusterAnnotation.h"
 #import "CCHMapClusterController.h"
+#import "CCHMapClusterControllerDelegate.h"
+#import "CCHCenterOfMassMapClusterer.h"
+#import "CCHNearCenterMapClusterer.h"
+#import "CCHFadeInOutMapAnimator.h"
+#import "ClusterAnnotationView.h"
 
 @interface MapKitView : CDVPlugin <MKMapViewDelegate>
 {
