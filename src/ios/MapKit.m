@@ -44,12 +44,29 @@
 - (void)createViewWithOptions:(NSDictionary *)options {
 
 
-
     //This is the Designated Initializer
 
     // defaults
     float height = ([options objectForKey:@"height"]) ? [[options objectForKey:@"height"] floatValue] : self.webView.bounds.size.height/2;
     float width = ([options objectForKey:@"width"]) ? [[options objectForKey:@"width"] floatValue] : self.webView.bounds.size.width;
+    float ratio = 0;
+
+    float denom = 1;
+
+    if(height != 0){
+        ratio = width / height;
+    }
+
+    denom = sqrt(1 + (ratio * ratio));
+
+    float diameter = [[options objectForKey:@"diameter"] floatValue] * 1609.344; // X miles
+
+    float distX = ratio * (diameter) / denom;
+    float distY = (diameter) / denom;
+
+    CLLocationDistance latitudinalMeters = distX;
+    CLLocationDistance longitudinalMeters = distY;
+
     float x = self.webView.bounds.origin.x;
     float y = self.webView.bounds.origin.y;
     BOOL atBottom = ([options objectForKey:@"atBottom"]) ? [[options objectForKey:@"atBottom"] boolValue] : NO;
@@ -72,11 +89,11 @@
 
 
     CLLocationCoordinate2D centerCoord = { [[options objectForKey:@"lat"] floatValue] , [[options objectForKey:@"lon"] floatValue] };
-    CLLocationDistance diameter = [[options objectForKey:@"diameter"] floatValue];
+
 
     MKCoordinateRegion region=[ self.mapView regionThatFits: MKCoordinateRegionMakeWithDistance(centerCoord,
-                                                                                                diameter*(height / self.webView.bounds.size.width),
-                                                                                                diameter*(height / self.webView.bounds.size.width))];
+                                                                                                latitudinalMeters,
+                                                                                                longitudinalMeters)];
     [self.mapView setRegion:region animated:YES];
     [self.childView addSubview:self.mapView];
 
@@ -246,6 +263,8 @@
     {
         return;
     }
+
+    NSLog(@"///////////////////////MOVE CENTER ");
 
     float spanX = 0.00725;
     float spanY = 0.00725;
