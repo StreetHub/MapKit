@@ -435,37 +435,38 @@ double deg2rad(double deg) {
 //when the map is moved
 - (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
 
-    MKCoordinateRegion region = self.mapView.region;
+//    MKCoordinateRegion region = self.mapView.region;
+//
+//    const int EARTH_RADIUS = 6371;
+//    const double KM_TO_MILES = 1.609344;
 
-    const int EARTH_RADIUS = 6371;
-    const double KM_TO_MILES = 1.609344;
-
-    double lat = region.center.latitude;
-    double lon = region.center.longitude;
-
-    double minLat = deg2rad(lat - (region.span.latitudeDelta / 2.0));
-    double maxLat = deg2rad(lat + (region.span.latitudeDelta / 2.0));
-
-    double minLon = deg2rad(lon - (region.span.longitudeDelta / 2.0));
-    double maxLon = deg2rad(lon + (region.span.longitudeDelta / 2.0));
-
-
-    // Haversine formula
-    double h = ( pow(sin((maxLat-minLat)/2), 2) + cos(minLat)*cos(maxLat) * pow(sin((maxLon-minLon)/2), 2) );
-
-    h = h > 1.0 ? 1.0 : h; // Avoid rounding errors
-    h = h < 0.0 ? 0.0 : h; // Avoid asin errors
-
-    double radius = (asin(sqrt(h)) * 2 * EARTH_RADIUS) / KM_TO_MILES;
+//    double lat = region.center.latitude;
+//    double lon = region.center.longitude;
+//
+//    double minLat = deg2rad(lat - (region.span.latitudeDelta / 2.0));
+//    double maxLat = deg2rad(lat + (region.span.latitudeDelta / 2.0));
+//
+//    double minLon = deg2rad(lon - (region.span.longitudeDelta / 2.0));
+//    double maxLon = deg2rad(lon + (region.span.longitudeDelta / 2.0));
+//
+//
+//    // Haversine formula
+//    double h = ( pow(sin((maxLat-minLat)/2), 2) + cos(minLat)*cos(maxLat) * pow(sin((maxLon-minLon)/2), 2) );
+//
+//    h = h > 1.0 ? 1.0 : h; // Avoid rounding errors
+//    h = h < 0.0 ? 0.0 : h; // Avoid asin errors
+//
+//    double radius = (asin(sqrt(h)) * 2 * EARTH_RADIUS) / KM_TO_MILES;
 
     MKMapRect visibleMapRect = self.mapView.visibleMapRect;
     NSSet *visibleAnnotations = [self.mapView annotationsInMapRect:visibleMapRect];
 
-
+    // Callback to filter the response for CCHMapClusterAnnotation
     NSPredicate *predCluster = [NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
         return [evaluatedObject isMemberOfClass:[CCHMapClusterAnnotation class]];
     }];
 
+    // Callback to filter the response for MKUserLocation
     NSPredicate *predMK = [NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
         return [evaluatedObject isMemberOfClass:[MKUserLocation class]];
     }];
@@ -477,6 +478,7 @@ double deg2rad(double deg) {
 
     for(CCHMapClusterAnnotation* cluster in clusterSet) {
         for (CDVAnnotation *annotation in cluster.annotations) {
+
             [response addObject:[[NSString alloc] initWithFormat:@"%f", annotation.coordinate.longitude]];
             [response addObject:[[NSString alloc] initWithFormat:@"%f", annotation.coordinate.latitude]];
         }
@@ -487,10 +489,8 @@ double deg2rad(double deg) {
         [response addObject:[[NSString alloc] initWithFormat:@"%f", position.location.coordinate.latitude]];
     }
 
-
+    // Convert to string - stringByEvaluatingJavaScriptFromString only accepts strings
     NSString * responseStr = [[response valueForKey:@"description"] componentsJoinedByString:@","];
-
-    NSLog(@"visible annotation %@ %@ %@", clusterSet, mkSet, responseStr);
 
     // lf : long float -> double
     NSString *regionDidChangeAnimatedFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.regionDidChangeAnimated('", responseStr,"')"];
