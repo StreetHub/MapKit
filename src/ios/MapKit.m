@@ -146,9 +146,12 @@
     for (int y = 0; y < pins.count; y++)
     {
         NSDictionary *pinData = [pins objectAtIndex:y];
+
         CLLocationCoordinate2D pinCoord = { [[pinData objectForKey:@"lat"] floatValue] , [[pinData objectForKey:@"lon"] floatValue] };
-        NSString *title=[[pinData valueForKey:@"title"] description];
-        NSString *subTitle=[[pinData valueForKey:@"snippet"] description];
+//        NSString *title=[[pinData valueForKey:@"title"] description];
+        NSString *title=@"Ta mere";
+//        NSString *subTitle=[[pinData valueForKey:@"snippet"] description];
+        NSString *subTitle=@"En String";
         NSInteger index=[[pinData valueForKey:@"index"] integerValue];
         BOOL selected = [[pinData valueForKey:@"selected"] boolValue];
 
@@ -455,8 +458,42 @@ double deg2rad(double deg) {
 
     double radius = (asin(sqrt(h)) * 2 * EARTH_RADIUS) / KM_TO_MILES;
 
+    MKMapRect visibleMapRect = self.mapView.visibleMapRect;
+    NSSet *visibleAnnotations = [self.mapView annotationsInMapRect:visibleMapRect];
+
+
+    NSPredicate *predCluster = [NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
+        return [evaluatedObject isMemberOfClass:[CCHMapClusterAnnotation class]];
+    }];
+
+    NSPredicate *predMK = [NSPredicate predicateWithBlock:^BOOL(id evaluatedObject, NSDictionary *bindings) {
+        return [evaluatedObject isMemberOfClass:[MKUserLocation class]];
+    }];
+
+    NSSet *clusterSet = [visibleAnnotations filteredSetUsingPredicate:predCluster];
+    NSSet *mkSet = [visibleAnnotations filteredSetUsingPredicate:predMK];
+
+    NSMutableArray *response = [[NSMutableArray alloc] init];
+
+    for(CCHMapClusterAnnotation* cluster in clusterSet) {
+        for (CDVAnnotation *annotation in cluster.annotations) {
+            [response addObject:[[NSString alloc] initWithFormat:@"%f", annotation.coordinate.longitude]];
+            [response addObject:[[NSString alloc] initWithFormat:@"%f", annotation.coordinate.latitude]];
+        }
+    }
+
+    for(MKUserLocation* position in mkSet) {
+        [response addObject:[[NSString alloc] initWithFormat:@"%f", position.location.coordinate.longitude]];
+        [response addObject:[[NSString alloc] initWithFormat:@"%f", position.location.coordinate.latitude]];
+    }
+
+
+    NSString * responseStr = [[response valueForKey:@"description"] componentsJoinedByString:@","];
+
+    NSLog(@"visible annotation %@ %@ %@", clusterSet, mkSet, responseStr);
+
     // lf : long float -> double
-    NSString *regionDidChangeAnimatedFunctionString = [NSString stringWithFormat:@"%s%lf%s%lf%s%lf%s", "mapKit.regionDidChangeAnimated('", radius,",", lat,",", lon, "')"];
+    NSString *regionDidChangeAnimatedFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.regionDidChangeAnimated('", responseStr,"')"];
     [self.webView stringByEvaluatingJavaScriptFromString:regionDidChangeAnimatedFunctionString];
 }
 
