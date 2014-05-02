@@ -18,14 +18,16 @@
 @synthesize coordinate = _coordinate;
 @synthesize pinColor;
 @synthesize selected;
+@synthesize slug = _slug;
 
-- (id)initWithCoordinate:(CLLocationCoordinate2D)coordinate index:(NSInteger)index title:(NSString*)title subTitle:(NSString*)subTitle imageURL:(NSString*)imageURL {
+- (id)initWithCoordinate:(CLLocationCoordinate2D)coordinate index:(NSInteger)index title:(NSString*)title subTitle:(NSString*)subTitle imageURL:(NSString*)imageURL slug:(NSString*)slug{
     if ((self = [super init])) {
         _coordinate=coordinate;
         _title = title;
         _subTitle = subTitle;
         _index=index;
         _imageURL=imageURL;
+        _slug = slug;
     }
     return self;
 }
