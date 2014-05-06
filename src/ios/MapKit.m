@@ -147,30 +147,33 @@
     NSArray *pins = command.arguments[0];
     NSMutableArray *newPins = [[NSMutableArray alloc] init];
 
-    for (int y = 0; y < pins.count; y++)
-    {
-        NSDictionary *pinData = [pins objectAtIndex:y];
+    // If already added pins, don t readd them
+    if([self.mapView.annotations count] > 1){
+        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+    } else {
 
-//        MKPointAnnotation *annotation = [[MKPointAnnotation alloc] init];
-        CLLocationCoordinate2D coordinate = { [[pinData objectForKey:@"lat"] floatValue] , [[pinData objectForKey:@"lon"] floatValue] };
+        for (int y = 0; y < pins.count; y++)
+        {
+            NSDictionary *pinData = [pins objectAtIndex:y];
 
-//        annotation.coordinate = CLLocationCoordinate2DMake([[pinData objectForKey:@"lat"] doubleValue], [[pinData objectForKey:@"lon"] doubleValue]);
-        NSString* title = [[pinData valueForKey:@"slug"] description];
-        NSString* subTitle = [[pinData valueForKey:@"slug"] description];
-        NSString* slug = [[pinData valueForKey:@"slug"] description];
-//        NSString *pinColor = nil;
-        NSString *imageURL = nil;
-        NSInteger index=[[pinData valueForKey:@"index"] integerValue];
+            CLLocationCoordinate2D coordinate = { [[pinData objectForKey:@"lat"] floatValue] , [[pinData objectForKey:@"lon"] floatValue] };
+            NSString* title = [[pinData valueForKey:@"slug"] description];
+            NSString* subTitle = [[pinData valueForKey:@"slug"] description];
+            NSString* slug = [[pinData valueForKey:@"slug"] description];
+            NSString *imageURL = nil;
+            NSInteger index=[[pinData valueForKey:@"index"] integerValue];
 
-        CDVAnnotation *annotation = [[CDVAnnotation alloc] initWithCoordinate:coordinate index:index title:title subTitle:subTitle imageURL:imageURL slug:slug];
+            CDVAnnotation *annotation = [[CDVAnnotation alloc] initWithCoordinate:coordinate index:index title:title subTitle:subTitle imageURL:imageURL slug:slug];
 
-        [newPins addObject:annotation];
+            [newPins addObject:annotation];
+        }
+
+        self.mapClusterControllerRed.debuggingEnabled = YES;
+        self.mapClusterControllerRed.cellSize = 30;
+        //    self.mapClusterController.maxZoomLevelForClustering = 13;
+        [self.mapClusterControllerRed addAnnotations:newPins withCompletionHandler:NULL];
+
     }
-
-    self.mapClusterControllerRed.debuggingEnabled = YES;
-    self.mapClusterControllerRed.cellSize = 30;
-//    self.mapClusterController.maxZoomLevelForClustering = 13;
-    [self.mapClusterControllerRed addAnnotations:newPins withCompletionHandler:NULL];
 
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 
@@ -410,7 +413,7 @@
 - (void)mapView:(MKMapView *)mapView didSelectAnnotationView:(MKAnnotationView *)view {
     NSLog(@"DEBUG: got here selectasdasdas stuff");
 
-    NSString *annotationTapFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.didSelectAnnotationView('", [view.annotation title], "')"];
+    NSString *annotationTapFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.didSelectAnnotationView('", [view.annotation subtitle], "')"];
     [self.webView stringByEvaluatingJavaScriptFromString:annotationTapFunctionString];
 }
 
