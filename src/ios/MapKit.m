@@ -8,7 +8,7 @@
 #import "AsyncImageView.h"
 
 @interface MapKitView()<CCHMapClusterControllerDelegate>
-
+//@property (strong, nonatomic) CCHMapClusterController *mapClusterController;
 @property (strong, nonatomic) CCHMapClusterController *mapClusterControllerRed;
 @property (strong, nonatomic) CCHMapClusterController *mapClusterControllerBlue;
 @property (assign, nonatomic) NSUInteger count;
@@ -97,6 +97,10 @@
     [self.mapView setRegion:region animated:YES];
     [self.childView addSubview:self.mapView];
 
+
+    self.mapClusterControllerRed = [[CCHMapClusterController alloc] initWithMapView:self.mapView];
+    self.mapClusterControllerRed.delegate = self;
+
     [ [ [ self viewController ] view ] addSubview:self.childView];
 
 }
@@ -147,45 +151,30 @@
     {
         NSDictionary *pinData = [pins objectAtIndex:y];
 
-        CLLocationCoordinate2D pinCoord = { [[pinData objectForKey:@"lat"] floatValue] , [[pinData objectForKey:@"lon"] floatValue] };
-//        NSString *title=[[pinData valueForKey:@"title"] description];
-        NSString *title=@"Ta mere";
-//        NSString *subTitle=[[pinData valueForKey:@"snippet"] description];
-        NSString *subTitle=[[pinData valueForKey:@"slug"] description];
-        NSInteger index=[[pinData valueForKey:@"index"] integerValue];
-        BOOL selected = [[pinData valueForKey:@"selected"] boolValue];
+//        MKPointAnnotation *annotation = [[MKPointAnnotation alloc] init];
+        CLLocationCoordinate2D coordinate = { [[pinData objectForKey:@"lat"] floatValue] , [[pinData objectForKey:@"lon"] floatValue] };
 
-        NSString *pinColor = nil;
+//        annotation.coordinate = CLLocationCoordinate2DMake([[pinData objectForKey:@"lat"] doubleValue], [[pinData objectForKey:@"lon"] doubleValue]);
+        NSString* title = [[pinData valueForKey:@"slug"] description];
+        NSString* subTitle = [[pinData valueForKey:@"slug"] description];
+        NSString* slug = [[pinData valueForKey:@"slug"] description];
+//        NSString *pinColor = nil;
         NSString *imageURL = nil;
+        NSInteger index=[[pinData valueForKey:@"index"] integerValue];
 
-        if([[pinData valueForKey:@"icon"] isKindOfClass:[NSNumber class]])
-        {
-            pinColor = [[pinData valueForKey:@"icon"] description];
-        }
-        else if([[pinData valueForKey:@"icon"] isKindOfClass:[NSDictionary class]])
-        {
-            NSDictionary *iconOptions = [pinData valueForKey:@"icon"];
-            pinColor = [[iconOptions valueForKey:@"pinColor" ] description];
-            imageURL=[[iconOptions valueForKey:@"resource"] description];
-        }
-        NSString *slug= [[pinData valueForKey:@"slug"] description];
-        CDVAnnotation *annotation = [[CDVAnnotation alloc] initWithCoordinate:pinCoord index:index title:title subTitle:subTitle imageURL:imageURL slug:slug];
-        annotation.pinColor=pinColor;
-        annotation.selected = selected;
+        CDVAnnotation *annotation = [[CDVAnnotation alloc] initWithCoordinate:coordinate index:index title:title subTitle:subTitle imageURL:imageURL slug:slug];
 
         [newPins addObject:annotation];
     }
 
-    self.mapClusterController = [[CCHMapClusterController alloc] initWithMapView:self.mapView];
-    self.mapClusterController.debuggingEnabled = YES;
-    self.mapClusterController.cellSize = 30;
+    self.mapClusterControllerRed.debuggingEnabled = YES;
+    self.mapClusterControllerRed.cellSize = 30;
 //    self.mapClusterController.maxZoomLevelForClustering = 13;
-    [self.mapClusterController addAnnotations:newPins withCompletionHandler:NULL];
+    [self.mapClusterControllerRed addAnnotations:newPins withCompletionHandler:NULL];
 
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 
 }
-
 - (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation
 {
     MKAnnotationView *annotationView;
@@ -203,7 +192,6 @@
 
         CCHMapClusterAnnotation *clusterAnnotation = (CCHMapClusterAnnotation *)annotation;
         clusterAnnotationView.count = clusterAnnotation.annotations.count;
-        NSLog(@"that cluster oh yeah %d",clusterAnnotation.annotations.count);
         clusterAnnotationView.blue = (clusterAnnotation.mapClusterController == self.mapClusterControllerBlue);
         clusterAnnotationView.uniqueLocation = clusterAnnotation.isUniqueLocation;
         annotationView = clusterAnnotationView;
@@ -211,6 +199,7 @@
 
     return annotationView;
 }
+
 
 -(void)showMap:(CDVInvokedUrlCommand *)command
 {
@@ -267,7 +256,7 @@
         return;
     }
 
-    NSLog(@"///////////////////////MOVE CENTER ");
+    NSLog(@"// MOVE CENTER: %@ %@ ", command.arguments[0][@"lat"], command.arguments[0][@"lon"]);
 
     float spanX = 0.00725;
     float spanY = 0.00725;
@@ -279,9 +268,6 @@
 
 
     [self.mapView setRegion:region animated:YES];
-
-    NSLog(@"iOS Coordinates lon %@", command.arguments[0][@"lon"] );
-    NSLog(@"iOS Coordinates lat %@", command.arguments[0][@"lat"] );
 
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 }
@@ -386,18 +372,18 @@
 //    return annView;
 //}
 
--(void)openAnnotation:(id <MKAnnotation>) annotation
-{
-    [ self.mapView selectAnnotation:annotation animated:YES];
-
-}
-
-- (void) checkButtonTapped:(id)button
-{
-    UIButton *tmpButton = button;
-    NSString* jsString = [NSString stringWithFormat:@"%@(\"%i\");", self.buttonCallback, tmpButton.tag];
-    [self.webView stringByEvaluatingJavaScriptFromString:jsString];
-}
+//-(void)openAnnotation:(id <MKAnnotation>) annotation
+//{
+//    [ self.mapView selectAnnotation:annotation animated:YES];
+//
+//}
+//
+//- (void) checkButtonTapped:(id)button
+//{
+//    UIButton *tmpButton = button;
+//    NSString* jsString = [NSString stringWithFormat:@"%@(\"%i\");", self.buttonCallback, tmpButton.tag];
+//    [self.webView stringByEvaluatingJavaScriptFromString:jsString];
+//}
 
 - (void)dealloc
 {
@@ -428,11 +414,31 @@
     [self.webView stringByEvaluatingJavaScriptFromString:annotationTapFunctionString];
 }
 
-double deg2rad(double deg) {
-    return deg * (M_PI/180);
+- (NSString *)mapClusterController:(CCHMapClusterController *)mapClusterController titleForMapClusterAnnotation:(CCHMapClusterAnnotation *)mapClusterAnnotation
+{
+
+    NSUInteger numAnnotations = mapClusterAnnotation.annotations.count;
+    NSLog(@"that cluster %d",numAnnotations);
+    NSString *unit = numAnnotations > 1 ? @"annotations" : @"annotation";
+    return [NSString stringWithFormat:@"%tu %@", numAnnotations, unit];
 }
 
-//when the map is moved
+- (NSString *)mapClusterController:(CCHMapClusterController *)mapClusterController subtitleForMapClusterAnnotation:(CCHMapClusterAnnotation *)mapClusterAnnotation
+{
+    NSUInteger numAnnotations = MIN(mapClusterAnnotation.annotations.count, 5);
+    NSArray *annotations = [mapClusterAnnotation.annotations.allObjects subarrayWithRange:NSMakeRange(0, numAnnotations)];
+    NSArray *titles = [annotations valueForKey:@"title"];
+    return [titles componentsJoinedByString:@", "];
+}
+
+- (void)mapClusterController:(CCHMapClusterController *)mapClusterController willReuseMapClusterAnnotation:(CCHMapClusterAnnotation *)mapClusterAnnotation
+{
+    ClusterAnnotationView *clusterAnnotationView = (ClusterAnnotationView *)[self.mapView viewForAnnotation:mapClusterAnnotation];
+    clusterAnnotationView.count = mapClusterAnnotation.annotations.count;
+    clusterAnnotationView.uniqueLocation = mapClusterAnnotation.isUniqueLocation;
+}
+
+// When the map is moved
 - (void)mapView:(MKMapView *)mapView regionDidChangeAnimated:(BOOL)animated {
 
 
