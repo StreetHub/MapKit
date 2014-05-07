@@ -185,6 +185,7 @@
             if([visibleAnnotations count] == 1 && [[[visibleAnnotations allObjects] firstObject ] isKindOfClass:[MKUserLocation class]]){ // if only user location pin
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"false"];
             } else {
+
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"true"];
             }
 
@@ -197,6 +198,9 @@
 //    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 
 }
+
+
+
 - (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation
 {
     MKAnnotationView *annotationView;
@@ -433,10 +437,14 @@
 
     NSMutableArray *response = [[NSMutableArray alloc] init];
 
-    // Return array of slugs
-    for(CCHMapClusterAnnotation* cluster in self.mapView.selectedAnnotations){
-        for (CDVAnnotation *annotation in cluster.annotations) {
-            [response addObject:[[NSString alloc] initWithFormat:@"%@", [ annotation slug ] ]];
+    if([[self.mapView.selectedAnnotations firstObject ] isKindOfClass:[MKUserLocation class]]){ // if only user location pin
+        [response addObject:[[NSString alloc] init]];
+    } else {
+        // Return array of slugs
+        for(CCHMapClusterAnnotation* cluster in self.mapView.selectedAnnotations){
+            for (CDVAnnotation *annotation in cluster.annotations) {
+                [response addObject:[[NSString alloc] initWithFormat:@"%@", [ annotation slug ] ]];
+            }
         }
     }
 
@@ -501,10 +509,9 @@
 
     NSMutableArray *response = [[NSMutableArray alloc] init];
 
-    NSLog(@"lalalala %d", [self.mapView.selectedAnnotations count]);
-
     // There are two for loops because self.mapView.selectedAnnotations is a NSArray and clusterSet a NSSet
-    if([self.mapView.selectedAnnotations count] > 0){ // only return selected
+    if([self.mapView.selectedAnnotations count] > 0 &&
+       ![[self.mapView.selectedAnnotations firstObject ] isKindOfClass:[MKUserLocation class]]){// only return selected and if location not selected
         for(CCHMapClusterAnnotation* cluster in self.mapView.selectedAnnotations){
             for (CDVAnnotation *annotation in cluster.annotations) {
                 [response addObject:[[NSString alloc] initWithFormat:@"%@", [ annotation slug ] ]];
@@ -526,6 +533,7 @@
     NSString *regionDidChangeAnimatedFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.regionDidChangeAnimated('", responseStr,"')"];
     [self.webView stringByEvaluatingJavaScriptFromString:regionDidChangeAnimatedFunctionString];
 }
+
 
 @end
 
