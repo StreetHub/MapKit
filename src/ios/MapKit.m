@@ -147,7 +147,7 @@
     NSArray *pins = command.arguments[0];
     NSMutableArray *newPins = [[NSMutableArray alloc] init];
 
-    // If already added pins, don t readd them
+    // If already added pins, don t re-add them
     if([self.mapView.annotations count] > 1){
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
     } else {
@@ -157,25 +157,44 @@
             NSDictionary *pinData = [pins objectAtIndex:y];
 
             CLLocationCoordinate2D coordinate = { [[pinData objectForKey:@"lat"] floatValue] , [[pinData objectForKey:@"lon"] floatValue] };
-            NSString* title = [[pinData valueForKey:@"slug"] description];
+            NSString* title = [[pinData valueForKey:@"name"] description];
             NSString* subTitle = [[pinData valueForKey:@"slug"] description];
             NSString* slug = [[pinData valueForKey:@"slug"] description];
             NSString *imageURL = nil;
             NSInteger index=[[pinData valueForKey:@"index"] integerValue];
-
             CDVAnnotation *annotation = [[CDVAnnotation alloc] initWithCoordinate:coordinate index:index title:title subTitle:subTitle imageURL:imageURL slug:slug];
 
             [newPins addObject:annotation];
         }
 
-        self.mapClusterControllerRed.debuggingEnabled = YES;
+        self.mapClusterControllerRed.debuggingEnabled = NO;
         self.mapClusterControllerRed.cellSize = 30;
         //    self.mapClusterController.maxZoomLevelForClustering = 13;
-        [self.mapClusterControllerRed addAnnotations:newPins withCompletionHandler:NULL];
+
+        __weak MapKitView *weakSelf = self; // self = this in obj-c - Avoid Strong Reference Cycles
+
+        [self.mapClusterControllerRed addAnnotations:newPins withCompletionHandler:^{
+
+            CDVPluginResult* pluginResult = nil;
+
+            MKMapRect visibleMapRect = weakSelf.mapView.visibleMapRect;
+            NSSet *visibleAnnotations = [weakSelf.mapView annotationsInMapRect:visibleMapRect];
+
+//            NSLog(@"I was blind but now I see %d %@", [visibleAnnotations count], [visibleAnnotations description]);
+
+            if([visibleAnnotations count] == 1 && [[[visibleAnnotations allObjects] firstObject ] isKindOfClass:[MKUserLocation class]]){ // if only user location pin
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"false"];
+            } else {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"true"];
+            }
+
+            [weakSelf.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        }];
 
     }
 
-    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
+//    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 
 }
 - (MKAnnotationView *)mapView:(MKMapView *)mapView viewForAnnotation:(id<MKAnnotation>)annotation
@@ -411,27 +430,52 @@
 
 //when a pin is selected, do something
 - (void)mapView:(MKMapView *)mapView didSelectAnnotationView:(MKAnnotationView *)view {
-    NSLog(@"DEBUG: got here selectasdasdas stuff");
 
-    NSString *annotationTapFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.didSelectAnnotationView('", [view.annotation subtitle], "')"];
+    NSMutableArray *response = [[NSMutableArray alloc] init];
+
+    // Return array of slugs
+    for(CCHMapClusterAnnotation* cluster in self.mapView.selectedAnnotations){
+        for (CDVAnnotation *annotation in cluster.annotations) {
+            [response addObject:[[NSString alloc] initWithFormat:@"%@", [ annotation slug ] ]];
+        }
+    }
+
+    NSString * responseStr = [[response valueForKey:@"description"] componentsJoinedByString:@","];
+
+    NSString *annotationTapFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.didSelectAnnotationView('", responseStr, "')"];
     [self.webView stringByEvaluatingJavaScriptFromString:annotationTapFunctionString];
 }
 
+// Change title on the annotation bubble (first line)
 - (NSString *)mapClusterController:(CCHMapClusterController *)mapClusterController titleForMapClusterAnnotation:(CCHMapClusterAnnotation *)mapClusterAnnotation
 {
 
+    NSString *title;
     NSUInteger numAnnotations = mapClusterAnnotation.annotations.count;
-    NSLog(@"that cluster %d",numAnnotations);
-    NSString *unit = numAnnotations > 1 ? @"annotations" : @"annotation";
-    return [NSString stringWithFormat:@"%tu %@", numAnnotations, unit];
+
+    if(numAnnotations == 1){
+        title = [[[mapClusterAnnotation.annotations allObjects] firstObject] valueForKey:@"title"];
+    } else {
+        title = [NSString stringWithFormat:@"%tu boutiques", numAnnotations];
+    }
+
+    return [title description];
 }
 
 - (NSString *)mapClusterController:(CCHMapClusterController *)mapClusterController subtitleForMapClusterAnnotation:(CCHMapClusterAnnotation *)mapClusterAnnotation
 {
     NSUInteger numAnnotations = MIN(mapClusterAnnotation.annotations.count, 5);
-    NSArray *annotations = [mapClusterAnnotation.annotations.allObjects subarrayWithRange:NSMakeRange(0, numAnnotations)];
-    NSArray *titles = [annotations valueForKey:@"title"];
-    return [titles componentsJoinedByString:@", "];
+    NSString *subtitle;
+
+    if(numAnnotations == 1){
+        subtitle = @"";
+    } else {
+        NSArray *annotations = [mapClusterAnnotation.annotations.allObjects subarrayWithRange:NSMakeRange(0, numAnnotations)];
+        NSArray *subtitles = [annotations valueForKey:@"title"];
+        subtitle = [subtitles componentsJoinedByString:@", "];
+    }
+
+    return [subtitle description];
 }
 
 - (void)mapClusterController:(CCHMapClusterController *)mapClusterController willReuseMapClusterAnnotation:(CCHMapClusterAnnotation *)mapClusterAnnotation
@@ -457,16 +501,28 @@
 
     NSMutableArray *response = [[NSMutableArray alloc] init];
 
-    for(CCHMapClusterAnnotation* cluster in clusterSet) {
-        for (CDVAnnotation *annotation in cluster.annotations) {
-            [response addObject:[[NSString alloc] initWithFormat:@"%@", [ annotation slug ] ]];
+    NSLog(@"lalalala %d", [self.mapView.selectedAnnotations count]);
+
+    // There are two for loops because self.mapView.selectedAnnotations is a NSArray and clusterSet a NSSet
+    if([self.mapView.selectedAnnotations count] > 0){ // only return selected
+        for(CCHMapClusterAnnotation* cluster in self.mapView.selectedAnnotations){
+            for (CDVAnnotation *annotation in cluster.annotations) {
+                [response addObject:[[NSString alloc] initWithFormat:@"%@", [ annotation slug ] ]];
+            }
         }
+    } else {
+
+        for(CCHMapClusterAnnotation* cluster in clusterSet) {
+            for (CDVAnnotation *annotation in cluster.annotations) {
+                [response addObject:[[NSString alloc] initWithFormat:@"%@", [ annotation slug ] ]];
+            }
+        }
+
     }
 
     // Convert to string - stringByEvaluatingJavaScriptFromString only accepts strings
     NSString * responseStr = [[response valueForKey:@"description"] componentsJoinedByString:@","];
-
-    // lf : long float -> double
+    NSLog(@"returned slugs %@", responseStr);
     NSString *regionDidChangeAnimatedFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.regionDidChangeAnimated('", responseStr,"')"];
     [self.webView stringByEvaluatingJavaScriptFromString:regionDidChangeAnimatedFunctionString];
 }
