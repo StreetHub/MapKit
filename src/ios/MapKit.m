@@ -180,7 +180,7 @@
             MKMapRect visibleMapRect = weakSelf.mapView.visibleMapRect;
             NSSet *visibleAnnotations = [weakSelf.mapView annotationsInMapRect:visibleMapRect];
 
-//            NSLog(@"I was blind but now I see %d %@", [visibleAnnotations count], [visibleAnnotations description]);
+           // NSLog(@"I was blind but now I see %d %@", [visibleAnnotations count], [visibleAnnotations description]);
 
             if([visibleAnnotations count] == 1 && [[[visibleAnnotations allObjects] firstObject ] isKindOfClass:[MKUserLocation class]]){ // if only user location pin
                 pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"false"];
@@ -282,7 +282,7 @@
         return;
     }
 
-    NSLog(@"// MOVE CENTER: %@ %@ ", command.arguments[0][@"lat"], command.arguments[0][@"lon"]);
+    // NSLog(@"// MOVE CENTER: %@ %@ ", command.arguments[0][@"lat"], command.arguments[0][@"lon"]);
 
     float spanX = 0.00725;
     float spanY = 0.00725;
@@ -305,37 +305,22 @@
         return;
     }
 
-//    NSLog(@"updatePINS %@", command.arguments);
+   // NSLog(@"updatePINS %@", command.arguments);
 
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 }
 
 //Might need this later?
-/*- (void) mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation
- {
- MKCoordinateRegion mapRegion;
- mapRegion.center = userLocation.coordinate;
- mapRegion.span.latitudeDelta = 0.2;
- mapRegion.span.longitudeDelta = 0.2;
+// - (void) mapView:(MKMapView *)mapView didUpdateUserLocation:(MKUserLocation *)userLocation
+//  {
+//  MKCoordinateRegion mapRegion;
+//  mapRegion.center = userLocation.coordinate;
+//  mapRegion.span.latitudeDelta = 0.2;
+//  mapRegion.span.longitudeDelta = 0.2;
 
- [self.mapView setRegion:mapRegion animated: YES];
- }
+//  [self.mapView setRegion:mapRegion animated: YES];
+//  }
 
-
- - (void)mapView:(MKMapView *)theMapView regionDidChangeAnimated: (BOOL)animated
- {
- NSLog(@"region did change animated");
- float currentLat = theMapView.region.center.latitude;
- float currentLon = theMapView.region.center.longitude;
- float latitudeDelta = theMapView.region.span.latitudeDelta;
- float longitudeDelta = theMapView.region.span.longitudeDelta;
-
- NSString* jsString = nil;
- jsString = [[NSString alloc] initWithFormat:@"geo.onMapMove(\'%f','%f','%f','%f\');", currentLat,currentLon,latitudeDelta,longitudeDelta];
- [self.webView stringByEvaluatingJavaScriptFromString:jsString];
- [jsString autorelease];
- }
- */
 
 
 //- (MKAnnotationView *) mapView:(MKMapView *)theMapView viewForAnnotation:(id <MKAnnotation>) annotation {
@@ -529,7 +514,7 @@
 
     // Convert to string - stringByEvaluatingJavaScriptFromString only accepts strings
     NSString * responseStr = [[response valueForKey:@"description"] componentsJoinedByString:@","];
-    NSLog(@"returned slugs %@", responseStr);
+    // NSLog(@"returned slugs %@", responseStr);
     NSString *regionDidChangeAnimatedFunctionString = [NSString stringWithFormat:@"%s%@%s", "mapKit.regionDidChangeAnimated('", responseStr,"')"];
     [self.webView stringByEvaluatingJavaScriptFromString:regionDidChangeAnimatedFunctionString];
 }
