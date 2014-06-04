@@ -284,8 +284,8 @@
 
     // NSLog(@"// MOVE CENTER: %@ %@ ", command.arguments[0][@"lat"], command.arguments[0][@"lon"]);
 
-    float spanX = 0.00725;
-    float spanY = 0.00725;
+    float spanX = 0.00725*3;
+    float spanY = 0.00725*3;
 
     MKCoordinateRegion region;
     region.center.latitude = [command.arguments[0][@"lat"] doubleValue] ;
